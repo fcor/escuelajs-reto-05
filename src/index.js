@@ -21,20 +21,28 @@ const handleLocalStorage = info => {
   localStorage.setItem('next_fetch', info.next);
 }
 
-const getData = api => {
-  fetch(api)
-    .then(response => response.json())
-    .then(response => {
-      const characters = response.results;
-      const info = response.info;
-      handleHtmlTemplate(characters);
-      handleLocalStorage(info);
-    })
-    .catch(error => console.log(error));
+const getData = async api => {
+  try {
+    const response = await fetch(api);
+    const data = await response.json();
+    const characters = data.results;
+    const info = data.info;
+    handleHtmlTemplate(characters);
+    handleLocalStorage(info);
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 const loadData = () => {
-  getData(API);
+  const localURL = localStorage.getItem('next_fetch');
+  let fetchURL;
+  if (localURL) {
+    fetchURL = localURL
+  } else {
+    fetchURL = API;
+  }
+  getData(fetchURL);
 }
 
 const intersectionObserver = new IntersectionObserver(entries => {
@@ -45,4 +53,5 @@ const intersectionObserver = new IntersectionObserver(entries => {
   rootMargin: '0px 0px 100% 0px',
 });
 
+localStorage.clear();
 intersectionObserver.observe($observe);
