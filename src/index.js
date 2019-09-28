@@ -1,24 +1,19 @@
+import { cardTemplate, endTemplate, errorTemplate } from "./utils/templates.js"
+
 const $app = document.getElementById('app');
 const $observe = document.getElementById('observe');
 const API = 'https://rickandmortyapi.com/api/character/';
 
-const cardTemplate = character => `
-  <article class="Card">
-    <img src="${character.image}" />
-    <h2>${character.name}<span>${character.species}</span></h2>
-  </article>
-  `
-
 const handleHtmlTemplate = characters => {
-  let output = characters.map(character => cardTemplate(character)).join('');
-  let newItem = document.createElement('section');
+  const output = characters.map(character => cardTemplate(character)).join('');
+  const newItem = document.createElement('section');
   newItem.classList.add('Items');
   newItem.innerHTML = output;
   $app.appendChild(newItem);
 }
 
-const handleLocalStorage = info => {
-  localStorage.setItem('next_fetch', info.next);
+const handleLocalStorage = url => {
+  localStorage.setItem('next_fetch', url);
 }
 
 const getData = async api => {
@@ -26,22 +21,29 @@ const getData = async api => {
     const response = await fetch(api);
     const data = await response.json();
     const characters = data.results;
-    const info = data.info;
-    handleHtmlTemplate(characters);
-    handleLocalStorage(info);
+    const url = data.info.next;
+
+    if (url) {
+      handleHtmlTemplate(characters);
+      handleLocalStorage(url);
+    } else {
+      const newItem = document.createElement('section');
+      newItem.innerHTML = endTemplate();
+      $app.appendChild(newItem);
+      intersectionObserver.unobserve($observe);
+    }
+
   } catch (error) {
-    console.log(error)
+    console.log(error);
+    const newItem = document.createElement('section');
+    newItem.innerHTML = errorTemplate();
+    $app.appendChild(newItem);
   }
 }
 
 const loadData = () => {
   const localURL = localStorage.getItem('next_fetch');
-  let fetchURL;
-  if (localURL) {
-    fetchURL = localURL
-  } else {
-    fetchURL = API;
-  }
+  const fetchURL = localURL ? localURL : API;
   getData(fetchURL);
 }
 
